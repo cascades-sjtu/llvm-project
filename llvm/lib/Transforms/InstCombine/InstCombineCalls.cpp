@@ -1023,9 +1023,17 @@ static std::optional<bool> getKnownSign(Value *Op, Instruction *CxtI,
     return true;
 
   Value *X, *Y;
-  if (match(Op, m_NSWSub(m_Value(X), m_Value(Y))))
+  if (match(Op, m_NSWSub(m_NSWAdd(m_Value(X), m_NonNegative()), m_Value(Y)))
+    || match(Op, m_NSWSub(m_Value(X), m_Value(Y)))
+    || match(Op, m_NSWShl(m_NSWSub(m_Value(X), m_Value(Y)), m_NonNegative())))
     return isImpliedByDomCondition(ICmpInst::ICMP_SLT, X, Y, CxtI, DL);
 
+  if (match(Op, m_Add(m_Xor(m_Value(X), m_AllOnes()), m_Value(Y)))) {
+    std::optional<bool> Sign = isImpliedByDomCondition(ICmpInst::ICMP_SLT, Y, X, CxtI, DL);
+    if (*Sign)
+      return true;
+    return std::nullopt;
+  }
   return isImpliedByDomCondition(
       ICmpInst::ICMP_SLT, Op, Constant::getNullValue(Op->getType()), CxtI, DL);
 }
