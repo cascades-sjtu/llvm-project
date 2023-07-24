@@ -478,6 +478,90 @@ cond.end:
   ret i32 %r
 }
 
+define i32 @sub_abs_gt_add_positive(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_abs_gt_add_positive(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[COND_TRUE:%.*]], label [[COND_END:%.*]]
+; CHECK:       cond.true:
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[X]], 1
+; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i32 [[ADD]], [[Y]]
+; CHECK-NEXT:    br label [[COND_END]]
+; CHECK:       cond.end:
+; CHECK-NEXT:    [[R:%.*]] = phi i32 [ [[SUB]], [[COND_TRUE]] ], [ 0, [[ENTRY:%.*]] ]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+entry:
+  %cmp = icmp sgt i32 %x, %y
+  br i1 %cmp, label %cond.true, label %cond.end
+
+cond.true:
+  %add = add nsw i32 %x, 1
+  %sub = sub nsw i32 %add, %y
+  %0 = call i32 @llvm.abs.i32(i32 %sub, i1 true)
+  br label %cond.end
+
+cond.end:
+  %r = phi i32 [ %0, %cond.true ], [ 0, %entry ]
+  ret i32 %r
+}
+
+define i32 @sub_abs_gt_multiply(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_abs_gt_multiply(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[COND_TRUE:%.*]], label [[COND_END:%.*]]
+; CHECK:       cond.true:
+; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i32 %x, %y
+; CHECK-NEXT:    [[MUL:%.*]] = shl nsw i32 %sub, 1
+; CHECK-NEXT:    br label [[COND_END]]
+; CHECK:       cond.end:
+; CHECK-NEXT:    [[R:%.*]] = phi i32 [ [[MUL]], [[COND_TRUE]] ], [ 0, [[ENTRY:%.*]] ]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+entry:
+  %cmp = icmp sgt i32 %x, %y
+  br i1 %cmp, label %cond.true, label %cond.end
+
+cond.true:
+  %sub = sub nsw i32 %x, %y
+  %mul = mul nsw i32 2, %sub
+  %0 = call i32 @llvm.abs.i32(i32 %mul, i1 true)
+  br label %cond.end
+
+cond.end:
+  %r = phi i32 [ %0, %cond.true ], [ 0, %entry ]
+  ret i32 %r
+}
+
+define i32 @sub_abs_gt_with_constant(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_abs_gt_with_constant(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[COND_TRUE:%.*]], label [[COND_END:%.*]]
+; CHECK:       cond.true:
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[X]], 1
+; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i32 [[ADD]], [[Y]]
+; CHECK-NEXT:    br label [[COND_END]]
+; CHECK:       cond.end:
+; CHECK-NEXT:    [[R:%.*]] = phi i32 [ [[SUB]], [[COND_TRUE]] ], [ 0, [[ENTRY:%.*]] ]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+entry:
+  %cmp = icmp sgt i32 %x, %y
+  br i1 %cmp, label %cond.true, label %cond.end
+
+cond.true:
+  %add = add nsw i32 %x, 1
+  %sub = sub nsw i32 %add, %y
+  %0 = call i32 @llvm.abs.i32(i32 %sub, i1 true)
+  br label %cond.end
+
+cond.end:
+  %r = phi i32 [ %0, %cond.true ], [ 0, %entry ]
+  ret i32 %r
+}
+
 define i32 @sub_abs_lt_min_not_poison(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_abs_lt_min_not_poison(
 ; CHECK-NEXT:  entry:
