@@ -4653,6 +4653,15 @@ static Value *simplifySelectWithICmpCond(Value *CondVal, Value *TrueVal,
     }
   }
 
+  // select((X - Y + 1) < 0 ? Y - X - 1 : X - Y + 1 --> X - Y + 1)
+  Value *X, *Y;
+  if (match(CmpLHS, m_NSWAdd(m_NSWSub(m_Value(X), m_Value(Y)), m_NonNegative())) && match(CmpRHS, m_Zero())) {
+      // when X - Y > 0 is implied by outer condition
+      std::optional<bool> Flag;
+      if ((Flag = isImpliedByDomCondition(ICmpInst::ICMP_SGT, X, Y, Q.CxtI, Q.DL)) && *Flag)
+        return CmpLHS;
+  }
+
   return nullptr;
 }
 
